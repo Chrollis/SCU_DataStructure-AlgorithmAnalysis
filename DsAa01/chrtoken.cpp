@@ -3,96 +3,51 @@
 namespace chr {
 	token_t string_to_operator_token_type(const std::string& operator_str)
 	{
-		if (operator_str == "(") {
-			return token_left_parentheses;
+		std::vector<operator_token*> exist_ops = {
+			new left_parentheses_token,
+			new right_parentheses_token,
+			new plus_token,
+			new minus_token,
+			new multiply_token,
+			new divide_token,
+			new posite_token,
+			new negate_token,
+			new exponent_token,
+			new sine_token,
+			new cosine_token,
+			new tangent_token,
+			new cotangent_token,
+			new secant_token,
+			new cosecant_token,
+			new arcsine_token,
+			new arccosine_token,
+			new arctangent_token,
+			new arccotangent_token,
+			new arcsecant_token,
+			new arccosecant_token,
+			new common_logarithm_token,
+			new natural_logarithm_token,
+			new square_root_token,
+			new cubic_root_token,
+			new factorial_token,
+			new modulo_token,
+			new degree_token,
+			new radian_token
+		};
+		token_t type = token_invalid;
+		for (const auto& op : exist_ops) {
+			if (op->str() == operator_str) {
+				type = op->type();
+				break;
+			}
 		}
-		else if (operator_str == ")") {
-			return token_right_parentheses;
+		if (type == token_invalid) {
+			throw std::runtime_error("Î´ÖªµÄÔËËã·ûÁîÅÆ×Ö·û´®");
 		}
-		else if (operator_str == "+") {
-			return token_plus;
+		for (auto op : exist_ops) {
+			delete op;
 		}
-		else if (operator_str == "-") {
-			return token_minus;
-		}
-		else if (operator_str == "*") {
-			return token_multiply;
-		}
-		else if (operator_str == "/") {
-			return token_divide;
-		}
-		else if (operator_str == "pos") {
-			return token_posite;
-		}
-		else if (operator_str == "neg") {
-			return token_negate;
-		}
-		else if (operator_str == "^") {
-			return token_exponent;
-		}
-		else if (operator_str == "sin") {
-			return token_sine;
-		}
-		else if (operator_str == "cos") {
-			return token_cosine;
-		}
-		else if (operator_str == "tan") {
-			return token_tangent;
-		}
-		else if (operator_str == "cot") {
-			return token_cotangent;
-		}
-		else if (operator_str == "sec") {
-			return token_secant;
-		}
-		else if (operator_str == "csc") {
-			return token_cosecant;
-		}
-		else if (operator_str == "arcsin") {
-			return token_arcsine;
-		}
-		else if (operator_str == "arccos") {
-			return token_arccosine;
-		}
-		else if (operator_str == "arctan") {
-			return token_arctangent;
-		}
-		else if (operator_str == "arccot") {
-			return token_arccotangent;
-		}
-		else if (operator_str == "arcsec") {
-			return token_arcsecant;
-		}
-		else if (operator_str == "arccsc") {
-			return token_arccosecant;
-		}
-		else if (operator_str == "lg") {
-			return token_common_logarithm;
-		}
-		else if (operator_str == "ln") {
-			return token_natural_logarithm;
-		}
-		else if (operator_str == "sqrt") {
-			return token_square_root;
-		}
-		else if (operator_str == "cbrt") {
-			return token_cubic_root;
-		}
-		else if (operator_str == "!") {
-			return token_factorial;
-		}
-		else if (operator_str == "%") {
-			return token_modulo;
-		}
-		else if (operator_str == "deg") {
-			return token_degree;
-		}
-		else if (operator_str == "rad") {
-			return token_radian;
-		}
-		else {
-			throw std::runtime_error("Î»ÖÃµÄÔËËã·ûÁîÅÆ");
-		}
+		return type;
 	}
 
 	operator_token* token_type_to_operator_token(token_t operator_type)

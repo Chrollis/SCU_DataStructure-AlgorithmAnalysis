@@ -4,32 +4,27 @@ namespace chr {
 
 	void basic_expression::calculate(std::stack<number_token>& operand_stack, const operator_token& op)
 	{
-		// 根据运算符需要的操作数个数，从操作数栈取值并执行运算
 		int operands = op.operand_num();
 		if (operands == 0) {
 			throw std::runtime_error("计算时出现零操作数运算符");
 		}
 		else if (operands == 1) {
-			// 一元操作符：使用栈顶作为唯一操作数（作为 left），将结果写回栈顶
 			double left = operand_stack.top().value();
 			operand_stack.top().rvalue() = op.apply(left, 0);
 		}
 		else if (operands == 2) {
-			// 二元操作符：注意右操作数在栈顶，先取右再取左
 			double right = operand_stack.top().value();
 			operand_stack.pop();
 			double left = operand_stack.top().value();
 			operand_stack.top().rvalue() = op.apply(left, right);
 		}
 		else {
-			// 不支持超过两个操作数的运算符
 			throw std::runtime_error("计算时出现操作数多于两个的运算符");
 		}
 	}
 
 	basic_expression::~basic_expression()
 	{
-		// 释放所有在 _content 中分配的令牌，避免内存泄漏
 		for (auto token : _content) {
 			delete token;
 		}
@@ -37,7 +32,6 @@ namespace chr {
 
 	std::ostream& operator<<(std::ostream& os, const basic_expression& expr) 
 	{
-		// 以可读形式打印表达式：数字直接打印值，其他令牌打印其字符串表示
 		std::vector<basic_token*> token_list = expr.content();
 		for (const basic_token* const token : token_list) {
 			if (token->type() == token_number) {
@@ -125,18 +119,15 @@ namespace chr {
 	}
 
 	double infix_expression::evaluate()const {
-		// 使用经典的两个栈算法：一个为操作数栈（number_token），一个为运算符栈（operator_token*）
 		std::stack<number_token> operand_stack;
 		std::stack<operator_token*> operator_stack;
 		for (auto token : _content) {
 			if (token->type() == token_number) {
-				// 将数字值拷贝入操作数栈（注意使用 value() 构造）
 				operand_stack.push(number_token(dynamic_cast<number_token*>(token)->value()));
 			}
 			else {
 				operator_token* op = dynamic_cast<operator_token*>(token);
 				if (op->type() == token_left_parentheses) {
-					// 左括号直接入栈（作为标记）
 					operator_stack.push(token_type_to_operator_token(op->type()));
 				}
 				else if (op->type() == token_right_parentheses) {
@@ -147,7 +138,6 @@ namespace chr {
 							break;
 						}
 						else {
-							// 普通运算符，应用并释放
 							calculate(operand_stack, *operator_stack.top());
 							delete operator_stack.top();
 							operator_stack.pop();
@@ -155,7 +145,6 @@ namespace chr {
 					}
 				}
 				else {
-					// 对于普通运算符，基于优先级决定是否先弹出栈顶运算符求值
 					while (!operator_stack.empty() && operator_stack.top()->priority() >= op->priority()) {
 						calculate(operand_stack, *operator_stack.top());
 						delete operator_stack.top();
@@ -165,13 +154,11 @@ namespace chr {
 				}
 			}
 		}
-		// 处理剩余运算符
 		while (!operator_stack.empty()) {
 			calculate(operand_stack, *operator_stack.top());
 			delete operator_stack.top();
 			operator_stack.pop();
 		}
-		// 最终操作数栈中应只剩一个结果
 		if (operand_stack.size() != 1) {
 			throw std::runtime_error("运算结束时出错，操作数栈不只有一个元素");
 		}
@@ -182,24 +169,20 @@ namespace chr {
 
 	postfix_expression::postfix_expression(const std::string& infix_expr_str)
 	{
-		// 先构造中缀表达式并获取其令牌流，再使用类似 shunting-yard 的方法生成后缀序列
 		infix_expression* infix_expr = new infix_expression(infix_expr_str);
 		std::vector<basic_token*> infix_tokens = infix_expr->content();
 		std::stack<operator_token*> op_stack;
 		for (auto token : infix_tokens) {
 			int type = token->type();
 			if (type == token_number) {
-				// 数字直接追加到后缀序列
 				_content.push_back(new number_token(dynamic_cast<number_token*>(token)->value()));
 			}
 			else {
 				operator_token* op = dynamic_cast<operator_token*>(token);
 				if (op->type() == token_left_parentheses) {
-					// 左括号入栈
 					op_stack.push(op);
 				}
 				else if (type == token_right_parentheses) {
-					// 右括号：弹出直到左括号
 					while (!op_stack.empty()) {
 						if (op_stack.top()->type() == token_left_parentheses) {
 							op_stack.pop();
@@ -212,7 +195,6 @@ namespace chr {
 					}
 				}
 				else {
-					// 按优先级弹栈再入栈
 					while (!op_stack.empty() && op_stack.top()->priority() >= op->priority()) {
 						_content.push_back(token_type_to_operator_token(op_stack.top()->type()));
 						op_stack.pop();
@@ -221,7 +203,6 @@ namespace chr {
 				}
 			}
 		}
-		// 将剩余运算符依次输出
 		while (!op_stack.empty()) {
 			_content.push_back(token_type_to_operator_token(op_stack.top()->type()));
 			op_stack.pop();
@@ -230,7 +211,6 @@ namespace chr {
 	}
 
 	double postfix_expression::evaluate()const {
-		// 后缀求值：遇到数字入栈，遇到运算符则调用 calculate
 		std::stack<number_token> operand_stack;
 		for (auto token : _content) {
 			if (token->type() == token_number) {
