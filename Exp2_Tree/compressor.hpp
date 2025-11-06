@@ -229,7 +229,6 @@ namespace chr {
 			double original_size = data_count * sizeof(T) * 8.0;
 			size_t encoded_size = encoded.size();
 			double compression_ratio = (1 - encoded_size / original_size) * 100;
-			std::cout << "\n压缩信息：\n";
 			std::cout << "数据数量：" << data_count << "\n";
 			std::cout << "原始大小：" << original_size << " 位\n";
 			std::cout << "编码大小：" << encoded_size << " 位\n";
@@ -238,6 +237,9 @@ namespace chr {
 			std::cout << "节省空间：" << (original_size - encoded_size) / 8.0
 				<< " 字节\n";
 		}
+	};
+	class compressor {
+
 	};
 }
 
