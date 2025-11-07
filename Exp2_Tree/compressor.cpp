@@ -84,6 +84,16 @@ namespace chr {
 		}
 		return oss.str();
 	}
+	std::string to_string(byte data) {
+		std::ostringstream oss;
+		if (data >= ' ' && data <= '~') {
+			oss << static_cast<char>(data);
+		}
+		else {
+			oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data);
+		}
+		return oss.str();
+	}
 	bool operator==(const byte_array& a, const byte_array& b) {
 		if (a.size() != b.size()) {
 			return 0;
@@ -102,10 +112,6 @@ namespace chr {
 			}
 		}
 		return 1;
-	}
-	std::ostream& operator<<(std::ostream& os, const byte_array& binary) {
-		os << binary.to_string(1);
-		return os;
 	}
 	std::filesystem::path compress(const std::filesystem::path& path) {
 		static std::vector<std::string> postfixs = {
@@ -130,6 +136,7 @@ namespace chr {
 		);
 		ifs.close();
 		huffman_tree tree(file_data);
+		tree.print_as_tree(1);
 		byte_array tree_structure = tree.to_byte_array();
 		std::filesystem::path output_path = path.string() + ".huff";
 		std::ofstream ofs(output_path.c_str(), std::ios::binary);
@@ -328,6 +335,73 @@ namespace chr {
 		}
 		return data;
 	}
+	void huffman_tree::prefind(std::shared_ptr<huffman_node> node, std::string& buffer, bool show_code) const {
+		if (node == nullptr) return;
+		if (node->is_leaf()) {
+			if (show_code) {
+				buffer += "[" + chr::to_string(node->data) + "]:" + encode(node->data).to_string() + " ";
+			}
+			else {
+				buffer += "[" + chr::to_string(node->data) + "] ";
+			}
+		}
+		else {
+			buffer += "{" + std::to_string(node->frequency) + "} ";
+		}
+		prefind(node->left, buffer, show_code);
+		prefind(node->right, buffer, show_code);
+	}
+	void huffman_tree::infind(std::shared_ptr<huffman_node> node, std::string& buffer, bool show_code) const {
+		if (node == nullptr) return;
+		prefind(node->left, buffer, show_code);
+		if (node->is_leaf()) {
+			if (show_code) {
+				buffer += "[" + chr::to_string(node->data) + "]:" + encode(node->data).to_string() + " ";
+			}
+			else {
+				buffer += "[" + chr::to_string(node->data) + "] ";
+			}
+		}
+		else {
+			buffer += "{" + std::to_string(node->frequency) + "} ";
+		}
+		prefind(node->right, buffer, show_code);
+	}
+	void huffman_tree::postfind(std::shared_ptr<huffman_node> node, std::string& buffer, bool show_code) const {
+		if (node == nullptr) return;
+		prefind(node->left, buffer, show_code);
+		prefind(node->right, buffer, show_code);
+		if (node->is_leaf()) {
+			if (show_code) {
+				buffer += "[" + chr::to_string(node->data) + "]:" + encode(node->data).to_string() + " ";
+			}
+			else {
+				buffer += "[" + chr::to_string(node->data) + "] ";
+			}
+		}
+		else {
+			buffer += "{" + std::to_string(node->frequency) + "} ";
+		}
+	}
+	void huffman_tree::print_as_tree_helper(std::shared_ptr<huffman_node> node, const std::string& prefix, bool is_left, bool show_code) const {
+		if (node == nullptr) return;
+		std::cout << prefix;
+		std::cout << (is_left ? "├──" : "└──");
+		if (node->is_leaf()) {
+			if (show_code) {
+				std::cout << "[" + chr::to_string(node->data) + "]:" + encode(node->data).to_string() + "\n";
+			}
+			else {
+				std::cout << "[" + chr::to_string(node->data) + "]\n";
+			}
+		}
+		else {
+			std::cout << "{" + std::to_string(node->frequency) + "}\n";
+		}
+		std::string new_prefix = prefix + (is_left ? "│   " : "    ");
+		print_as_tree_helper(node->left, new_prefix, 1, show_code);
+		print_as_tree_helper(node->right, new_prefix, 0, show_code);
+	}
 	const byte_array& huffman_tree::encode(byte data) const {
 		auto it = m_codes.find(data);
 		if (it != m_codes.end()) {
@@ -392,10 +466,30 @@ namespace chr {
 		serialize_tree(m_root, buffer);
 		return buffer;
 	}
+	std::string huffman_tree::to_string(traversal_mode mode, bool show_code) const {
+		std::string buffer;
+		switch (mode) {
+		case traversal_mode::preorder:
+			prefind(m_root, buffer, show_code);
+			break;
+		case traversal_mode::inorder:
+			infind(m_root, buffer, show_code);
+			break;
+		case traversal_mode::postorder:
+			postfind(m_root, buffer, show_code);
+			break;
+		default:
+			throw std::invalid_argument("未知遍历模式");
+		}
+		return buffer;
+	}
+	void huffman_tree::print_as_tree(bool show_code) const {
+		print_as_tree_helper(m_root, "", 1, show_code);
+	}
 	std::string huffman_tree::code_table() const {
 		std::ostringstream oss;
 		for (const auto& pair : m_codes) {
-			oss << "[" << std::to_string(pair.first) << "]:" << pair.second << "\n";
+			oss << "[" << chr::to_string(pair.first) << "]:" << pair.second.to_string() << "\n";
 		}
 		return oss.str();
 	}

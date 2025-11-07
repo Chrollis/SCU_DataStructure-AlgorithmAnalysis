@@ -14,6 +14,7 @@
 namespace chr {
 
 	using byte = unsigned char;
+	std::string to_string(byte data);
 	class huffman_node {
 	public:
 		byte data;
@@ -53,7 +54,6 @@ namespace chr {
 		friend bool operator==(const byte_array& a, const byte_array& b);
 		friend bool operator!=(const byte_array& a, const byte_array& b) { return !(a == b); }
 	};
-	std::ostream& operator<<(std::ostream& os, const byte_array& binary);
 	struct byte_array_hash {
 		size_t operator()(const byte_array& binary) const;
 	};
@@ -73,6 +73,10 @@ namespace chr {
 		void serialize_data(byte data, byte_array& buffer) const;
 		std::shared_ptr<huffman_node> deserialize_tree(byte_array& buffer, size_t& bit_index) const;
 		byte deserialize_data(byte_array& buffer, size_t& bit_index) const;
+		void prefind(std::shared_ptr<huffman_node> node, std::string& buffer, bool show_code = 0) const;
+		void infind(std::shared_ptr<huffman_node> node, std::string& buffer, bool show_code = 0) const;
+		void postfind(std::shared_ptr<huffman_node> node, std::string& buffer, bool show_code = 0) const;
+		void print_as_tree_helper(std::shared_ptr<huffman_node> node, const std::string& prefix, bool is_left, bool show_code = 0) const;
 	public:
 		huffman_tree(const std::vector<byte>& vec_data) { from_vector(vec_data); }
 		huffman_tree(const std::unordered_map<byte, unsigned>& frequency_table) { from_frequency_table(frequency_table); }
@@ -83,7 +87,13 @@ namespace chr {
 		std::vector<byte> decode(const byte_array& encoded) const;
 		std::vector<byte> fast_decode(const byte_array& encoded) const;
 		byte_array to_byte_array() const;
-		std::string to_string() const { return to_byte_array().to_string(); }
+		enum class traversal_mode {
+			preorder,
+			inorder,
+			postorder
+		};
+		std::string to_string(traversal_mode mode = traversal_mode::preorder, bool show_code = 0) const;
+		void print_as_tree(bool show_code = 0) const;
 		const std::unordered_map<byte, byte_array>& codes() const { return m_codes; }
 		std::string code_table() const;
 		bool is_built() const { return m_root != nullptr; }
