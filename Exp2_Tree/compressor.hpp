@@ -102,14 +102,6 @@ namespace chr {
 	};
 	void compress(const std::filesystem::path& src_path, const std::filesystem::path& dst_path, bool show_rate, bool show_tree);
 	void decompress(const std::filesystem::path& src_path, const std::filesystem::path& dst_path, bool show_rate, bool show_tree);
-	void parse_command(const std::string& command);
-	std::vector<std::string> parse_command_tokens(const std::string& command);
-	std::unordered_map<std::string, std::string> parse_command_args(const std::vector<std::string>& tokens);
-	bool validate_compression_mode(const std::unordered_map<std::string, std::string>& args);
-	std::filesystem::path get_source_path(const std::unordered_map<std::string, std::string>& args);
-	std::filesystem::path build_destination_path(const std::unordered_map<std::string, std::string>& args, const std::filesystem::path& src_path, bool is_decompress);
-	int parse_option(const std::unordered_map<std::string, std::string>& args);
-	void execute_compression(bool is_decompress, const std::filesystem::path& src_path, const std::filesystem::path& dst_path, int option);
 }
 
 #endif // !COMPRESSOR_HPP
